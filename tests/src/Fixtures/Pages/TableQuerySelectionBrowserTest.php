@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 use Filament\Tests\Fixtures\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Url;
 
 class TableQuerySelectionBrowserTest extends Page implements HasTable
 {
@@ -34,12 +35,22 @@ class TableQuerySelectionBrowserTest extends Page implements HasTable
 
     public ?int $selectionLimit = null;
 
+    #[Url]
+    public bool $pollSelection = false;
+
+    public int $pollCount = 0;
+
     public function mount(): void
     {
         $this->nested = request()->boolean('nested');
         $this->currentPageOnly = request()->boolean('currentPageOnly');
         $this->pageSize = request()->integer('pageSize', 2);
         $this->selectionLimit = request()->integer('selectionLimit') ?: null;
+    }
+
+    public function countSelectionPoll(): void
+    {
+        $this->pollCount++;
     }
 
     public function table(Table $table): Table
@@ -72,6 +83,9 @@ class TableQuerySelectionBrowserTest extends Page implements HasTable
             EmbeddedTable::make(),
             Text::make(fn (): string => $this->selectedKeys)->extraAttributes(['data-testid' => 'selected-keys', 'role' => 'status']),
             Text::make(fn (): string => $this->submittedKeys)->extraAttributes(['data-testid' => 'submitted-keys', 'role' => 'status']),
+            Text::make(fn (): string => (string) $this->pollCount)
+                ->extraAttributes(['data-testid' => 'selection-poll', 'wire:poll.500ms.keep-alive' => 'countSelectionPoll'])
+                ->visible(fn (): bool => $this->pollSelection),
         ]);
     }
 }
